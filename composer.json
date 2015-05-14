@@ -1,6 +1,6 @@
 {
   "name": "neomerx/limoncello",
-  "description": "JSON API (jsonapi.org) framework integration",
+  "description": "Framework integration for neomerx/json-api (JSON API, jsonapi.org)",
   "keywords": [
     "jsonapi.org",
     "json-api",
@@ -8,6 +8,7 @@
     "neomerx",
     "json",
     "api",
+    "symfony",
     "laravel",
     "lumen"
   ],
@@ -25,14 +26,13 @@
   "require": {
     "php": ">=5.5.0",
     "symfony/http-kernel": "~2.6.7",
-    "neomerx/json-api": "dev-master"
+    "neomerx/json-api": "0.2.1"
   },
   "require-dev": {
     "phpunit/phpunit": "~4.6",
     "mockery/mockery": "~0.9.4",
     "scrutinizer/ocular": "~1.1"
   },
-  "minimum-stability": "stable",
   "autoload": {
     "psr-4": {
       "Neomerx\\Limoncello\\": "src/"
