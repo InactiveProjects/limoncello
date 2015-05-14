@@ -28,7 +28,7 @@ abstract class FrameworkIntegration implements IntegrationInterface
      */
     public function getContent()
     {
-        $content = $this->getCurrentRequest()->getContent();
+        $content = (string)$this->getCurrentRequest()->getContent();
 
         return $content === '' ? null : $content;
     }
