@@ -1,3 +1,9 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/neomerx/limoncello/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/neomerx/limoncello/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/neomerx/limoncello/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/neomerx/limoncello/?branch=master)
+[![Build Status](https://travis-ci.org/neomerx/limoncello.svg?branch=master)](https://travis-ci.org/neomerx/limoncello)
+[![HHVM](https://img.shields.io/hhvm/neomerx/limoncello.svg)](https://travis-ci.org/neomerx/limoncello)
+[![License](https://img.shields.io/packagist/l/neomerx/limoncello.svg)](https://packagist.org/packages/neomerx/limoncello)
+
 ## Description
 
 This package provides integration level between [framework agnostic JSON API implementation](https://github.com/neomerx/json-api/) and JSON API quick start application [Limoncello](https://github.com/neomerx/limoncello-collins) (Laravel based).
