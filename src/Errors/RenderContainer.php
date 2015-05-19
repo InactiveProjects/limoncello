@@ -23,6 +23,7 @@ use \Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use \Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use \Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use \Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
 use \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use \Neomerx\JsonApi\Exceptions\RenderContainer as BaseRenderContainer;
@@ -43,14 +44,18 @@ use \Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 class RenderContainer extends BaseRenderContainer
 {
     /**
-     * @param Closure $codeResponse
-     * @param int     $defaultStatusCode
+     * @param NativeResponsesInterface $responses
+     * @param Closure                  $extensionsClosure
+     * @param int                      $defaultStatusCode
      */
-    public function __construct(Closure $codeResponse, $defaultStatusCode = Response::HTTP_INTERNAL_SERVER_ERROR)
-    {
-        parent::__construct($codeResponse, $defaultStatusCode);
+    public function __construct(
+        NativeResponsesInterface $responses,
+        Closure $extensionsClosure,
+        $defaultStatusCode = Response::HTTP_INTERNAL_SERVER_ERROR
+    ) {
+        parent::__construct($responses, $extensionsClosure, $defaultStatusCode);
 
-        $this->registerMapping([
+        $this->registerHttpCodeMapping([
             HttpException::class                        => Response::HTTP_INTERNAL_SERVER_ERROR,
             GoneHttpException::class                    => Response::HTTP_GONE,
             ConflictHttpException::class                => Response::HTTP_CONFLICT,
@@ -67,5 +72,17 @@ class RenderContainer extends BaseRenderContainer
             PreconditionRequiredHttpException::class    => Response::HTTP_PRECONDITION_REQUIRED,
             UnsupportedMediaTypeHttpException::class    => Response::HTTP_UNSUPPORTED_MEDIA_TYPE,
         ]);
+
+        $this->registerJsonApiErrorMapping([
+            JsonApiException::class                     => Response::HTTP_BAD_REQUEST,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getErrorsRender($statusCode)
+    {
+        return parent::getErrorsRender($statusCode);
     }
 }

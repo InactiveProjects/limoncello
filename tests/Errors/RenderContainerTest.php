@@ -16,10 +16,14 @@
  * limitations under the License.
  */
 
+use \Mockery;
+use \Mockery\MockInterface;
+use Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
 use \Neomerx\Limoncello\Errors\RenderContainer;
 use \Symfony\Component\HttpFoundation\Response;
 use \Neomerx\JsonApi\Contracts\Exceptions\RenderContainerInterface;
+use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
 use \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
@@ -27,10 +31,18 @@ use \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
  */
 class RenderContainerTest extends BaseTestCase
 {
+    /** Default error code */
+    const DEFAULT_CODE = 567;
+
     /**
      * @var RenderContainerInterface
      */
     private $container;
+
+    /**
+     * @var MockInterface
+     */
+    private $mockResponses;
 
     /**
      * Set up test.
@@ -39,9 +51,18 @@ class RenderContainerTest extends BaseTestCase
     {
         parent::setUp();
 
-        $this->container = new RenderContainer(function ($code) {
-            return 'error: ' . $code;
-        });
+        $mockSupExt = Mockery::mock(SupportedExtensionsInterface::class);
+        $mockSupExt->shouldReceive('getExtensions')->once()->withNoArgs()->andReturn([]);
+        $extensionsClosure = function () use ($mockSupExt) {
+            return $mockSupExt;
+        };
+
+        $this->mockResponses = Mockery::mock(NativeResponsesInterface::class);
+
+        /** @var NativeResponsesInterface $mockResponses */
+        $mockResponses = $this->mockResponses;
+
+        $this->container = new RenderContainer($mockResponses, $extensionsClosure, self::DEFAULT_CODE);
     }
 
     /**
@@ -49,6 +70,10 @@ class RenderContainerTest extends BaseTestCase
      */
     public function testRegisterMapping()
     {
+        $this->mockResponses->shouldReceive('createResponse')->once()
+            ->withArgs([null, Response::HTTP_TOO_MANY_REQUESTS, Mockery::any()])
+            ->andReturn('error: '. Response::HTTP_TOO_MANY_REQUESTS);
+
         $render = $this->container->getRender(new TooManyRequestsHttpException());
         $this->assertEquals('error: ' . Response::HTTP_TOO_MANY_REQUESTS, $render());
     }

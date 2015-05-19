@@ -6,7 +6,10 @@
 
 ## Description
 
-This package provides integration level between [framework agnostic JSON API implementation](https://github.com/neomerx/json-api/) and Symfony-based quick start applications such as [Limoncello collins](https://github.com/neomerx/limoncello-collins) (Laravel based).
+This package provides integration level between [framework agnostic JSON API implementation](https://github.com/neomerx/json-api/) and Symfony-based quick start applications such as
+
+- [Limoncello Collins](https://github.com/neomerx/limoncello-collins) (Laravel based).
+- [Limoncello Shot](https://github.com/neomerx/limoncello-shot) (Lumen based).
 
 ## Versioning
 

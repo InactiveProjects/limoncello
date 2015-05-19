@@ -208,11 +208,13 @@ trait JsonApiTrait
             $depth = isset($config[C::JSON][C::JSON_DEPTH]) === true ?
                 $config[C::JSON][C::JSON_DEPTH] : C::JSON_DEPTH_DEFAULT;
 
-            $encoderFactory = new EncoderFactory();
+            $encoderFactory    = new EncoderFactory();
+            $parametersFactory = new ParametersFactory();
             return new Encoder(
                 new DocumentFactory(),
                 $encoderFactory,
                 $encoderFactory,
+                $parametersFactory,
                 $container,
                 new JsonEncodeOptions($options, $depth)
             );
