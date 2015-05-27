@@ -17,9 +17,8 @@
  */
 
 use \Neomerx\JsonApi\Encoder\Encoder;
+use \Neomerx\JsonApi\Codec\CodecMatcher;
 use \Neomerx\JsonApi\Responses\Responses;
-use \Neomerx\JsonApi\Codec\CodecContainer;
-use \Neomerx\JsonApi\Parameters\MediaType;
 use \Neomerx\JsonApi\Schema\SchemaFactory;
 use \Neomerx\JsonApi\Decoders\ArrayDecoder;
 use \Neomerx\Limoncello\Config\Config as C;
@@ -31,15 +30,16 @@ use \Neomerx\JsonApi\Parameters\ParametersFactory;
 use \Neomerx\JsonApi\Encoder\Factory\EncoderFactory;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
 use \Neomerx\JsonApi\Contracts\Schema\ContainerInterface;
+use \Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
 use \Neomerx\JsonApi\Parameters\RestrictiveParameterChecker;
 use \Neomerx\JsonApi\Contracts\Responses\ResponsesInterface;
-use \Neomerx\JsonApi\Contracts\Codec\CodecContainerInterface;
-use \Neomerx\JsonApi\Contracts\Parameters\MediaTypeInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParametersInterface;
 use \Neomerx\JsonApi\Contracts\Document\DocumentLinksInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParametersParserInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParameterCheckerInterface;
 use \Neomerx\JsonApi\Contracts\Integration\ExceptionThrowerInterface;
+use \Neomerx\JsonApi\Contracts\Parameters\Headers\MediaTypeInterface;
+use \Neomerx\JsonApi\Contracts\Parameters\ParametersFactoryInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
 
 /**
@@ -108,14 +108,21 @@ trait JsonApiTrait
     protected $extensions = MediaTypeInterface::NO_EXT;
 
     /**
+     * If JSON API extension should be allowed.
+     *
+     * @var bool
+     */
+    protected $allowExtensionsSupport = false;
+
+    /**
      * @var IntegrationInterface
      */
     protected $integration;
 
     /**
-     * @var CodecContainerInterface
+     * @var CodecMatcherInterface
      */
-    private $codecContainer;
+    private $codecMatcher;
 
     /**
      * @var ParametersParserInterface
@@ -158,31 +165,37 @@ trait JsonApiTrait
     private $schemaContainer;
 
     /**
+     * @var ParametersFactoryInterface
+     */
+    private $parametersFactory;
+
+    /**
      * Init integrations with JSON API implementation.
      *
      * @return void
      */
     protected function initJsonApiSupport()
     {
-        $parametersFactory = new ParametersFactory();
+        $this->parametersFactory = new ParametersFactory();
 
         // integrations with framework
         $this->responses        = new Responses($this->getIntegration());
         $this->exceptionThrower = new ExceptionThrower();
 
         // init support from json-api implementation
-        $this->initCodecContainer();
-        $this->parametersParser    = $parametersFactory->createParametersParser();
-        $this->supportedExtensions = $parametersFactory->createSupportedExtensions($this->extensions);
+        $this->initCodecMatcher();
+        $this->parametersParser    = $this->parametersFactory->createParametersParser();
+        $this->supportedExtensions = $this->parametersFactory->createSupportedExtensions($this->extensions);
         $this->parametersChecker   = new RestrictiveParameterChecker(
             $this->exceptionThrower,
-            $this->codecContainer,
+            $this->codecMatcher,
             $this->allowUnrecognizedParams,
             $this->allowedIncludePaths,
             $this->allowedFieldSetTypes,
             $this->allowedSortFields,
             $this->allowedPagingParameters,
-            $this->allowedFilteringParameters
+            $this->allowedFilteringParameters,
+            $this->allowExtensionsSupport
         );
 
         // information about extensions supported by the current controller might be used in exception handler
@@ -194,7 +207,7 @@ trait JsonApiTrait
      *
      * @return void
      */
-    protected function initCodecContainer()
+    protected function initCodecMatcher()
     {
         $config  = $this->getIntegration()->getConfig();
         $schemas = isset($config[C::SCHEMAS]) === true ? $config[C::SCHEMAS] : [];
@@ -220,10 +233,13 @@ trait JsonApiTrait
             );
         };
 
-        $this->codecContainer = new CodecContainer();
-        $jsonApiType          = new MediaType(CodecContainerInterface::JSON_API_TYPE);
-        $this->codecContainer->registerEncoder($jsonApiType, $jsonApiEncoder);
-        $this->codecContainer->registerDecoder($jsonApiType, function () {
+        $this->codecMatcher = new CodecMatcher();
+        $jsonApiType        = $this->parametersFactory->createMediaType(
+            MediaTypeInterface::JSON_API_TYPE,
+            MediaTypeInterface::JSON_API_SUB_TYPE
+        );
+        $this->codecMatcher->registerEncoder($jsonApiType, $jsonApiEncoder);
+        $this->codecMatcher->registerDecoder($jsonApiType, function () {
             return new ArrayDecoder();
         });
     }
@@ -242,7 +258,11 @@ trait JsonApiTrait
      */
     protected function getDocument()
     {
-        $decoder = $this->codecContainer->getDecoder($this->getParameters()->getInputMediaType());
+        if ($this->codecMatcher->getDecoder() === null) {
+            $this->codecMatcher->findDecoder($this->getParameters()->getContentTypeHeader());
+        }
+
+        $decoder = $this->codecMatcher->getDecoder();
         return $decoder->decode($this->getIntegration()->getContent());
     }
 
@@ -286,8 +306,10 @@ trait JsonApiTrait
      */
     protected function getCodeResponse($statusCode)
     {
-        $mediaType = $this->getParameters()->getOutputMediaType();
-        return $this->responses->getResponse($statusCode, $mediaType, null, $this->supportedExtensions);
+        $this->matchEncoder();
+
+        $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
+        return $this->responses->getResponse($statusCode, $outputMediaType, null, $this->supportedExtensions);
     }
 
     /**
@@ -312,9 +334,11 @@ trait JsonApiTrait
         DocumentLinksInterface $links = null,
         $meta = null
     ) {
+        $this->matchEncoder();
+
         $parameters      = $this->getParameters();
-        $outputMediaType = $parameters->getOutputMediaType();
-        $encoder         = $this->codecContainer->getEncoder($outputMediaType);
+        $encoder         = $this->codecMatcher->getEncoder();
+        $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
         $content         = $encoder->encode($data, $links, $meta, $parameters);
 
         return $this->responses->getResponse($statusCode, $outputMediaType, $content, $this->supportedExtensions);
@@ -332,12 +356,24 @@ trait JsonApiTrait
         DocumentLinksInterface $links = null,
         $meta = null
     ) {
+        $this->matchEncoder();
+
         $parameters      = $this->getParameters();
-        $outputMediaType = $parameters->getOutputMediaType();
-        $encoder         = $this->codecContainer->getEncoder($outputMediaType);
+        $encoder         = $this->codecMatcher->getEncoder();
+        $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
         $location        = $this->schemaContainer->getSchema($resource)->getSelfUrl($resource);
         $content         = $encoder->encode($resource, $links, $meta, $parameters);
 
         return $this->responses->getCreatedResponse($location, $outputMediaType, $content, $this->supportedExtensions);
+    }
+
+    /**
+     * @return void
+     */
+    private function matchEncoder()
+    {
+        if ($this->codecMatcher->getEncoder() === null) {
+            $this->codecMatcher->matchEncoder($this->getParameters()->getAcceptHeader());
+        }
     }
 }
