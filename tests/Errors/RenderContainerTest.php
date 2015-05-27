@@ -19,6 +19,7 @@
 use \Mockery;
 use \Mockery\MockInterface;
 use Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
+use Neomerx\JsonApi\Parameters\ParametersFactory;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
 use \Neomerx\Limoncello\Errors\RenderContainer;
 use \Symfony\Component\HttpFoundation\Response;
@@ -62,7 +63,12 @@ class RenderContainerTest extends BaseTestCase
         /** @var NativeResponsesInterface $mockResponses */
         $mockResponses = $this->mockResponses;
 
-        $this->container = new RenderContainer($mockResponses, $extensionsClosure, self::DEFAULT_CODE);
+        $this->container = new RenderContainer(
+            new ParametersFactory(),
+            $mockResponses,
+            $extensionsClosure,
+            self::DEFAULT_CODE
+        );
     }
 
     /**

@@ -24,6 +24,7 @@ use \Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use \Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use \Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
+use \Neomerx\JsonApi\Contracts\Parameters\ParametersFactoryInterface;
 use \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use \Neomerx\JsonApi\Exceptions\RenderContainer as BaseRenderContainer;
@@ -44,16 +45,18 @@ use \Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 class RenderContainer extends BaseRenderContainer
 {
     /**
+     * @param ParametersFactoryInterface $factory
      * @param NativeResponsesInterface $responses
      * @param Closure                  $extensionsClosure
      * @param int                      $defaultStatusCode
      */
     public function __construct(
+        ParametersFactoryInterface $factory,
         NativeResponsesInterface $responses,
         Closure $extensionsClosure,
         $defaultStatusCode = Response::HTTP_INTERNAL_SERVER_ERROR
     ) {
-        parent::__construct($responses, $extensionsClosure, $defaultStatusCode);
+        parent::__construct($factory, $responses, $extensionsClosure, $defaultStatusCode);
 
         $this->registerHttpCodeMapping([
             HttpException::class                        => Response::HTTP_INTERNAL_SERVER_ERROR,

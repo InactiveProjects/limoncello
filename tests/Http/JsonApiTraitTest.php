@@ -23,7 +23,7 @@ use \Neomerx\Limoncello\Http\JsonApiTrait;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
 use \Neomerx\Tests\Limoncello\Data\FakeSchema;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
-use \Neomerx\JsonApi\Contracts\Codec\CodecContainerInterface;
+use \Neomerx\JsonApi\Contracts\Parameters\Headers\MediaTypeInterface;
 
 /**
  * @package Neomerx\Tests\Limoncello
@@ -49,9 +49,9 @@ class JsonApiTraitTest extends BaseTestCase
         $mockIntegration->shouldReceive('declareSupportedExtensions')->once()->withAnyArgs()->andReturnUndefined();
 
         $mockIntegration->shouldReceive('getHeader')->once()->with('Content-Type')
-            ->andReturn(CodecContainerInterface::JSON_API_TYPE);
+            ->andReturn(MediaTypeInterface::JSON_API_MEDIA_TYPE);
         $mockIntegration->shouldReceive('getHeader') ->once()->with('Accept')
-            ->andReturn(CodecContainerInterface::JSON_API_TYPE);
+            ->andReturn(MediaTypeInterface::JSON_API_MEDIA_TYPE);
         $mockIntegration->shouldReceive('getQueryParameters')->once()->withNoArgs()->andReturn([]);
 
         $this->initJsonApiSupport();
@@ -74,7 +74,7 @@ class JsonApiTraitTest extends BaseTestCase
      */
     public function testGetCodeResponse()
     {
-        $headers = ['Content-Type' => CodecContainerInterface::JSON_API_TYPE];
+        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
@@ -89,7 +89,7 @@ class JsonApiTraitTest extends BaseTestCase
      */
     public function testGetContentResponse()
     {
-        $headers = ['Content-Type' => CodecContainerInterface::JSON_API_TYPE];
+        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
@@ -107,7 +107,7 @@ class JsonApiTraitTest extends BaseTestCase
     {
         $headers = [
             'Location'     => '/fake-items/123',
-            'Content-Type' => CodecContainerInterface::JSON_API_TYPE
+            'Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE
         ];
 
         /** @var MockInterface $mockIntegration */
