@@ -101,6 +101,22 @@ class JsonApiTraitTest extends BaseTestCase
     }
 
     /**
+     * Test get meta response.
+     */
+    public function testGetMetaResponse()
+    {
+        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
+
+        /** @var MockInterface $mockIntegration */
+        $mockIntegration = $this->integration;
+        $mockIntegration->shouldReceive('createResponse')->once()
+            ->withArgs([Mockery::type('string'), 200, $headers])->andReturn('response');
+
+        // any object can be sent to getContentResponse however we need to mock schema for it
+        $this->assertEquals('response', $this->getMetaResponse(['meta' => 'info']));
+    }
+
+    /**
      * Test get 'created' (HTTP code 201) response.
      */
     public function testGetCreatedResponse()

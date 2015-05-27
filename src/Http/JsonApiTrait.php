@@ -209,12 +209,13 @@ trait JsonApiTrait
      */
     protected function initCodecMatcher()
     {
-        $config  = $this->getIntegration()->getConfig();
-        $schemas = isset($config[C::SCHEMAS]) === true ? $config[C::SCHEMAS] : [];
+        $jsonApiEncoder = function () {
+            $config  = $this->getConfig();
 
-        $container = $this->schemaContainer = (new SchemaFactory())->createContainer($schemas);
+            $schemas = isset($config[C::SCHEMAS]) === true ? $config[C::SCHEMAS] : [];
 
-        $jsonApiEncoder = function () use ($container, $config) {
+            $container = $this->schemaContainer = (new SchemaFactory())->createContainer($schemas);
+
             $options = isset($config[C::JSON][C::JSON_OPTIONS]) === true ?
                 $config[C::JSON][C::JSON_OPTIONS] : C::JSON_OPTIONS_DEFAULT;
 
@@ -242,6 +243,16 @@ trait JsonApiTrait
         $this->codecMatcher->registerDecoder($jsonApiType, function () {
             return new ArrayDecoder();
         });
+    }
+
+    /**
+     * Get Limoncello config.
+     *
+     * @return array
+     */
+    protected function getConfig()
+    {
+        return $this->getIntegration()->getConfig();
     }
 
     /**
@@ -300,16 +311,37 @@ trait JsonApiTrait
     }
 
     /**
+     * Get response with HTTP code only.
+     *
      * @param $statusCode
      *
      * @return Response
      */
     protected function getCodeResponse($statusCode)
     {
-        $this->matchEncoder();
+        $this->checkParameters();
 
         $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
         return $this->responses->getResponse($statusCode, $outputMediaType, null, $this->supportedExtensions);
+    }
+
+    /**
+     * Get response with meta information only.
+     *
+     * @param array|object $meta       Meta information.
+     * @param int          $statusCode
+     *
+     * @return Response
+     */
+    protected function getMetaResponse($meta, $statusCode = Response::HTTP_OK)
+    {
+        $this->checkParameters();
+
+        $encoder         = $this->codecMatcher->getEncoder();
+        $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
+        $content         = $encoder->meta($meta);
+
+        return $this->responses->getResponse($statusCode, $outputMediaType, $content, $this->supportedExtensions);
     }
 
     /**
@@ -321,6 +353,8 @@ trait JsonApiTrait
     }
 
     /**
+     * Get response with regular JSON API Document in body.
+     *
      * @param object|array                $data
      * @param int                         $statusCode
      * @param DocumentLinksInterface|null $links
@@ -334,8 +368,6 @@ trait JsonApiTrait
         DocumentLinksInterface $links = null,
         $meta = null
     ) {
-        $this->matchEncoder();
-
         $parameters      = $this->getParameters();
         $encoder         = $this->codecMatcher->getEncoder();
         $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
@@ -356,8 +388,6 @@ trait JsonApiTrait
         DocumentLinksInterface $links = null,
         $meta = null
     ) {
-        $this->matchEncoder();
-
         $parameters      = $this->getParameters();
         $encoder         = $this->codecMatcher->getEncoder();
         $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
@@ -365,15 +395,5 @@ trait JsonApiTrait
         $content         = $encoder->encode($resource, $links, $meta, $parameters);
 
         return $this->responses->getCreatedResponse($location, $outputMediaType, $content, $this->supportedExtensions);
-    }
-
-    /**
-     * @return void
-     */
-    private function matchEncoder()
-    {
-        if ($this->codecMatcher->getEncoder() === null) {
-            $this->codecMatcher->matchEncoder($this->getParameters()->getAcceptHeader());
-        }
     }
 }
