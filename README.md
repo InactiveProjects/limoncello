@@ -11,6 +11,8 @@ This package provides integration level between [framework agnostic JSON API imp
 - [Limoncello Collins](https://github.com/neomerx/limoncello-collins) (Laravel based).
 - [Limoncello Shot](https://github.com/neomerx/limoncello-shot) (Lumen based).
 
+**To find out more, please check out the [Wiki](https://github.com/neomerx/limoncello/wiki)**
+
 ## Versioning
 
 This package is using [Semantic Versioning](http://semver.org/).

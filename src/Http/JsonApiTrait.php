@@ -27,6 +27,7 @@ use \Neomerx\JsonApi\Encoder\JsonEncodeOptions;
 use \Symfony\Component\HttpFoundation\Response;
 use \Neomerx\Limoncello\Errors\ExceptionThrower;
 use \Neomerx\JsonApi\Parameters\ParametersFactory;
+use \Neomerx\JsonApi\Contracts\Schema\LinkInterface;
 use \Neomerx\JsonApi\Encoder\Factory\EncoderFactory;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
 use \Neomerx\JsonApi\Contracts\Schema\ContainerInterface;
@@ -34,7 +35,6 @@ use \Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
 use \Neomerx\JsonApi\Parameters\RestrictiveParameterChecker;
 use \Neomerx\JsonApi\Contracts\Responses\ResponsesInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParametersInterface;
-use \Neomerx\JsonApi\Contracts\Document\DocumentLinksInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParametersParserInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParameterCheckerInterface;
 use \Neomerx\JsonApi\Contracts\Integration\ExceptionThrowerInterface;
@@ -66,10 +66,19 @@ trait JsonApiTrait
     /**
      * A list of JSON API types which clients can sent field sets to.
      *
-     * Empty array [] means clients are not allowed to specify field sets for all types and
-     * 'null' means any field sets are allowed.
+     * Possible values
      *
-     * @var string[]|null
+     * $allowedFieldSetTypes = null; // <-- for all types all fields are allowed
+     *
+     * $allowedFieldSetTypes = []; // <-- non of the types and fields are allowed
+     *
+     * $allowedFieldSetTypes = [
+     *      'author'   => null,              // <-- all fields for 'author' are allowed
+     *      'comments' => [],                // <-- no fields for 'comments' are allowed (all denied)
+     *      'posts'    => ['title', 'body'], // <-- only 'title' and 'body' fields are allowed for 'posts'
+     * ];
+     *
+     * @var array|null
      */
     protected $allowedFieldSetTypes = null;
 
@@ -355,17 +364,17 @@ trait JsonApiTrait
     /**
      * Get response with regular JSON API Document in body.
      *
-     * @param object|array                $data
-     * @param int                         $statusCode
-     * @param DocumentLinksInterface|null $links
-     * @param mixed                       $meta
+     * @param object|array         $data
+     * @param int                  $statusCode
+     * @param LinkInterface[]|null $links
+     * @param mixed                $meta
      *
      * @return Response
      */
     protected function getContentResponse(
         $data,
         $statusCode = Response::HTTP_OK,
-        DocumentLinksInterface $links = null,
+        $links = null,
         $meta = null
     ) {
         $parameters      = $this->getParameters();
@@ -377,15 +386,15 @@ trait JsonApiTrait
     }
 
     /**
-     * @param object                      $resource
-     * @param DocumentLinksInterface|null $links
-     * @param mixed                       $meta
+     * @param object               $resource
+     * @param LinkInterface[]|null $links
+     * @param mixed                $meta
      *
      * @return Response
      */
     protected function getCreatedResponse(
         $resource,
-        DocumentLinksInterface $links = null,
+        $links = null,
         $meta = null
     ) {
         $parameters      = $this->getParameters();
@@ -395,5 +404,15 @@ trait JsonApiTrait
         $content         = $encoder->encode($resource, $links, $meta, $parameters);
 
         return $this->responses->getCreatedResponse($location, $outputMediaType, $content, $this->supportedExtensions);
+    }
+
+    /**
+     * Get codec matcher.
+     *
+     * @return CodecMatcherInterface
+     */
+    protected function getCodecMatcher()
+    {
+        return $this->codecMatcher;
     }
 }
