@@ -67,6 +67,8 @@ class JsonApiTraitTest extends BaseTestCase
         $mockIntegration->shouldReceive('getContent')->once()->withNoArgs()->andReturn('{"key": "value"}');
 
         $this->assertEquals(['key' => 'value'], $this->getDocument());
+
+        $this->assertNotNull($this->getCodecMatcher());
     }
 
     /**
