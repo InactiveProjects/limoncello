@@ -16,8 +16,10 @@
  * limitations under the License.
  */
 
+use \Neomerx\JsonApi\Schema\Link;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
 use \Neomerx\Limoncello\Errors\JsonApiException;
+use \Neomerx\JsonApi\Contracts\Document\DocumentInterface;
 
 /**
  * @package Neomerx\Tests\Limoncello
@@ -30,19 +32,19 @@ class JsonApiExceptionTest extends BaseTestCase
     public function testExceptionProperties()
     {
         $exception = new JsonApiException(
-            $idx    = 'some-id',
-            $href   = 'some-href',
-            $status = 'some-status',
-            $code   = 'some-code',
-            $title  = 'some-title',
-            $detail = 'some-detail',
-            $source = ['source' => 'info'],
-            $meta   = ['meta'   => 'info']
+            $idx       = 'some-id',
+            $aboutLink = new Link('about-link'),
+            $status    = 'some-status',
+            $code      = 'some-code',
+            $title     = 'some-title',
+            $detail    = 'some-detail',
+            $source    = ['source' => 'info'],
+            $meta      = ['meta'   => 'info']
         );
 
         $this->assertNotNull($error = $exception->getError());
         $this->assertEquals($idx, $error->getId());
-        $this->assertEquals($href, $error->getHref());
+        $this->assertEquals([DocumentInterface::KEYWORD_ERRORS_ABOUT => $aboutLink], $error->getLinks());
         $this->assertEquals($status, $error->getStatus());
         $this->assertEquals($code, $error->getCode());
         $this->assertEquals($title, $error->getTitle());

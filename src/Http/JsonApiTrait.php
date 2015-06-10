@@ -22,12 +22,11 @@ use \Neomerx\JsonApi\Responses\Responses;
 use \Neomerx\JsonApi\Schema\SchemaFactory;
 use \Neomerx\JsonApi\Decoders\ArrayDecoder;
 use \Neomerx\Limoncello\Config\Config as C;
+use \Neomerx\JsonApi\Encoder\EncoderOptions;
 use \Neomerx\JsonApi\Document\DocumentFactory;
-use \Neomerx\JsonApi\Encoder\JsonEncodeOptions;
 use \Symfony\Component\HttpFoundation\Response;
 use \Neomerx\Limoncello\Errors\ExceptionThrower;
 use \Neomerx\JsonApi\Parameters\ParametersFactory;
-use \Neomerx\JsonApi\Contracts\Schema\LinkInterface;
 use \Neomerx\JsonApi\Encoder\Factory\EncoderFactory;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
 use \Neomerx\JsonApi\Contracts\Schema\ContainerInterface;
@@ -231,6 +230,15 @@ trait JsonApiTrait
             $depth = isset($config[C::JSON][C::JSON_DEPTH]) === true ?
                 $config[C::JSON][C::JSON_DEPTH] : C::JSON_DEPTH_DEFAULT;
 
+            $isShowVersion = isset($config[C::JSON][C::JSON_IS_SHOW_VERSION]) === true ?
+                $config[C::JSON][C::JSON_IS_SHOW_VERSION] : C::JSON_IS_SHOW_VERSION_DEFAULT;
+
+            $versionMeta = isset($config[C::JSON][C::JSON_VERSION_META]) === true ?
+                $config[C::JSON][C::JSON_VERSION_META] : null;
+
+            $urlPrefix = isset($config[C::JSON][C::JSON_URL_PREFIX]) === true ?
+                $config[C::JSON][C::JSON_URL_PREFIX] : null;
+
             $encoderFactory    = new EncoderFactory();
             $parametersFactory = new ParametersFactory();
             return new Encoder(
@@ -239,7 +247,7 @@ trait JsonApiTrait
                 $encoderFactory,
                 $parametersFactory,
                 $container,
-                new JsonEncodeOptions($options, $depth)
+                new EncoderOptions($options, $urlPrefix, $isShowVersion, $versionMeta, $depth)
             );
         };
 
@@ -248,6 +256,7 @@ trait JsonApiTrait
             MediaTypeInterface::JSON_API_TYPE,
             MediaTypeInterface::JSON_API_SUB_TYPE
         );
+
         $this->codecMatcher->registerEncoder($jsonApiType, $jsonApiEncoder);
         $this->codecMatcher->registerDecoder($jsonApiType, function () {
             return new ArrayDecoder();
@@ -308,6 +317,14 @@ trait JsonApiTrait
     }
 
     /**
+     * @return void
+     */
+    protected function checkParametersEmpty()
+    {
+        $this->getParameters()->isEmpty() === true ?: $this->exceptionThrower->throwBadRequest();
+    }
+
+    /**
      * @return ParametersInterface
      */
     protected function getParameters()
@@ -364,10 +381,10 @@ trait JsonApiTrait
     /**
      * Get response with regular JSON API Document in body.
      *
-     * @param object|array         $data
-     * @param int                  $statusCode
-     * @param LinkInterface[]|null $links
-     * @param mixed                $meta
+     * @param object|array                                                       $data
+     * @param int                                                                $statusCode
+     * @param array<string,\Neomerx\JsonApi\Contracts\Schema\LinkInterface>|null $links
+     * @param mixed                                                              $meta
      *
      * @return Response
      */
@@ -386,9 +403,9 @@ trait JsonApiTrait
     }
 
     /**
-     * @param object               $resource
-     * @param LinkInterface[]|null $links
-     * @param mixed                $meta
+     * @param object                                                             $resource
+     * @param array<string,\Neomerx\JsonApi\Contracts\Schema\LinkInterface>|null $links
+     * @param mixed                                                              $meta
      *
      * @return Response
      */
@@ -400,8 +417,10 @@ trait JsonApiTrait
         $parameters      = $this->getParameters();
         $encoder         = $this->codecMatcher->getEncoder();
         $outputMediaType = $this->codecMatcher->getEncoderRegisteredMatchedType();
-        $location        = $this->schemaContainer->getSchema($resource)->getSelfUrl($resource);
         $content         = $encoder->encode($resource, $links, $meta, $parameters);
+
+        $urlPrefix = $encoder->getEncoderOptions() === null ? null : $encoder->getEncoderOptions()->getUrlPrefix();
+        $location  = $urlPrefix. $this->schemaContainer->getSchema($resource)->getSelfSubLink($resource)->getSubHref();
 
         return $this->responses->getCreatedResponse($location, $outputMediaType, $content, $this->supportedExtensions);
     }
@@ -414,5 +433,13 @@ trait JsonApiTrait
     protected function getCodecMatcher()
     {
         return $this->codecMatcher;
+    }
+
+    /**
+     * @return ExceptionThrowerInterface
+     */
+    protected function getExceptionThrower()
+    {
+        return $this->exceptionThrower;
     }
 }

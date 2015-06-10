@@ -31,7 +31,7 @@ class FakeSchema extends SchemaProvider
     /**
      * @var string
      */
-    protected $baseSelfUrl  = '/fake-items/';
+    protected $selfSubUrl = '/fake-items/';
 
     /**
      * @inheritdoc

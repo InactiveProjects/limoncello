@@ -19,6 +19,7 @@
 use \Exception;
 use \RuntimeException;
 use \Neomerx\JsonApi\Document\Error;
+use \Neomerx\JsonApi\Contracts\Schema\LinkInterface;
 
 /**
  * @package Neomerx\Limoncello
@@ -31,21 +32,21 @@ class JsonApiException extends RuntimeException
     private $error;
 
     /**
-     * @param int|string|null $idx
-     * @param string|null     $href
-     * @param string|null     $status
-     * @param string|null     $code
-     * @param string|null     $title
-     * @param string|null     $detail
-     * @param array|null      $source
-     * @param array|null      $meta
-     * @param Exception|null  $previous
+     * @param int|string|null    $idx
+     * @param LinkInterface|null $aboutLink
+     * @param string|null        $status
+     * @param string|null        $code
+     * @param string|null        $title
+     * @param string|null        $detail
+     * @param array|null         $source
+     * @param array|null         $meta
+     * @param Exception|null     $previous
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         $idx = null,
-        $href = null,
+        LinkInterface $aboutLink = null,
         $status = null,
         $code = null,
         $title = null,
@@ -55,7 +56,7 @@ class JsonApiException extends RuntimeException
         Exception $previous = null
     ) {
         parent::__construct($title, 0, $previous);
-        $this->error = new Error($idx, $href, $status, $code, $title, $detail, $source, $meta);
+        $this->error = new Error($idx, $aboutLink, $status, $code, $title, $detail, $source, $meta);
     }
 
     /**

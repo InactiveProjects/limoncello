@@ -18,17 +18,16 @@
 
 use \Mockery;
 use \Mockery\MockInterface;
-use \Neomerx\Limoncello\Config\Config;
 use \Neomerx\Limoncello\Http\JsonApiTrait;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
-use \Neomerx\Tests\Limoncello\Data\FakeSchema;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
+use \Neomerx\JsonApi\Contracts\Encoder\EncoderInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\Headers\MediaTypeInterface;
 
 /**
  * @package Neomerx\Tests\Limoncello
  */
-class JsonApiTraitTest extends BaseTestCase
+class JsonApiTraitCodecTest extends BaseTestCase
 {
     use JsonApiTrait;
 
@@ -43,9 +42,6 @@ class JsonApiTraitTest extends BaseTestCase
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
-        $mockIntegration->shouldReceive('getConfig')->once()->withNoArgs()->andReturn([
-            Config::SCHEMAS => [self::class => FakeSchema::class]
-        ]);
         $mockIntegration->shouldReceive('declareSupportedExtensions')->once()->withAnyArgs()->andReturnUndefined();
 
         $mockIntegration->shouldReceive('getHeader')->once()->with('Content-Type')
@@ -55,8 +51,35 @@ class JsonApiTraitTest extends BaseTestCase
         $mockIntegration->shouldReceive('getQueryParameters')->once()->withNoArgs()->andReturn([]);
 
         $this->initJsonApiSupport();
+    }
 
-        $this->assertNotNull($this->getExceptionThrower());
+    /**
+     * Test get document.
+     */
+    public function testGetDocument()
+    {
+        /** @var MockInterface $mockIntegration */
+        $mockIntegration = $this->integration;
+        $mockIntegration->shouldReceive('getContent')->once()->withNoArgs()->andReturn('{"key": "value"}');
+
+        $this->assertEquals(['key' => 'value'], $this->getDocument());
+
+        $this->assertNotNull($this->getCodecMatcher());
+    }
+
+    /**
+     * Test get code response.
+     */
+    public function testGetCodeResponse()
+    {
+        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
+
+        /** @var MockInterface $mockIntegration */
+        $mockIntegration = $this->integration;
+        $mockIntegration->shouldReceive('createResponse')->once()
+            ->withArgs([null, 123, $headers])->andReturn('response');
+
+        $this->assertEquals('response', $this->getCodeResponse(123));
     }
 
     /**
@@ -64,49 +87,35 @@ class JsonApiTraitTest extends BaseTestCase
      */
     public function testGetContentResponse()
     {
-        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
+        // trigger parse params and headers
+        $this->getParameters();
+
+        $matchedMediaType = $this->getCodecMatcher()->getEncoderRegisteredMatchedType();
+        $this->assertEquals(MediaTypeInterface::JSON_API_MEDIA_TYPE, $matchedMediaType->getMediaType());
+
+        // set encoder
+        $this->getCodecMatcher()->setEncoder(function () {
+            $encoder = Mockery::mock(EncoderInterface::class);
+            $encoder->shouldReceive('encode')->once()->withAnyArgs()
+                ->andReturn('result will be overwritten by another mock');
+            return $encoder;
+        });
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
         $mockIntegration->shouldReceive('createResponse')->once()
-            ->withArgs([Mockery::type('string'), 200, $headers])->andReturn('response');
+            ->withArgs([Mockery::type('string'), 200, ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE]])
+            ->andReturn('response');
 
         // any object can be sent to getContentResponse however we need to mock schema for it
         $this->assertEquals('response', $this->getContentResponse($this));
     }
 
     /**
-     * Test get meta response.
+     * Test checkParametersEmpty.
      */
-    public function testGetMetaResponse()
+    public function testCheckParametersEmpty()
     {
-        $headers = ['Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE];
-
-        /** @var MockInterface $mockIntegration */
-        $mockIntegration = $this->integration;
-        $mockIntegration->shouldReceive('createResponse')->once()
-            ->withArgs([Mockery::type('string'), 200, $headers])->andReturn('response');
-
-        // any object can be sent to getContentResponse however we need to mock schema for it
-        $this->assertEquals('response', $this->getMetaResponse(['meta' => 'info']));
-    }
-
-    /**
-     * Test get 'created' (HTTP code 201) response.
-     */
-    public function testGetCreatedResponse()
-    {
-        $headers = [
-            'Location'     => '/fake-items/123',
-            'Content-Type' => MediaTypeInterface::JSON_API_MEDIA_TYPE
-        ];
-
-        /** @var MockInterface $mockIntegration */
-        $mockIntegration = $this->integration;
-        $mockIntegration->shouldReceive('createResponse')->once()
-            ->withArgs([Mockery::type('string'), 201, $headers])->andReturn('response');
-
-        // any object can be sent to getContentResponse however we need to mock schema for it
-        $this->assertEquals('response', $this->getCreatedResponse($this));
+        $this->checkParametersEmpty();
     }
 }

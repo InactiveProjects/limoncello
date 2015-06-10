@@ -69,4 +69,24 @@ class ExceptionThrowerTest extends BaseTestCase
     {
         $this->thrower->throwUnsupportedMediaType();
     }
+
+    /**
+     * Test throw exception.
+     *
+     * @expectedException \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException
+     */
+    public function testAccessDenied()
+    {
+        $this->thrower->throwForbidden();
+    }
+
+    /**
+     * Test throw exception.
+     *
+     * @expectedException \Symfony\Component\HttpKernel\Exception\ConflictHttpException
+     */
+    public function testConflict()
+    {
+        $this->thrower->throwConflict();
+    }
 }
