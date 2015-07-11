@@ -18,12 +18,12 @@
 
 use \Mockery;
 use \Mockery\MockInterface;
-use Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
-use Neomerx\JsonApi\Parameters\ParametersFactory;
+use \Neomerx\JsonApi\Factories\Factory;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
 use \Neomerx\Limoncello\Errors\RenderContainer;
 use \Symfony\Component\HttpFoundation\Response;
 use \Neomerx\JsonApi\Contracts\Exceptions\RenderContainerInterface;
+use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
 use \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -64,7 +64,7 @@ class RenderContainerTest extends BaseTestCase
         $mockResponses = $this->mockResponses;
 
         $this->container = new RenderContainer(
-            new ParametersFactory(),
+            new Factory(),
             $mockResponses,
             $extensionsClosure,
             self::DEFAULT_CODE

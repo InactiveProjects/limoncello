@@ -17,19 +17,17 @@
  */
 
 use \Neomerx\JsonApi\Encoder\Encoder;
+use \Neomerx\JsonApi\Factories\Factory;
 use \Neomerx\JsonApi\Codec\CodecMatcher;
 use \Neomerx\JsonApi\Responses\Responses;
-use \Neomerx\JsonApi\Schema\SchemaFactory;
 use \Neomerx\JsonApi\Decoders\ArrayDecoder;
 use \Neomerx\Limoncello\Config\Config as C;
 use \Neomerx\JsonApi\Encoder\EncoderOptions;
-use \Neomerx\JsonApi\Document\DocumentFactory;
 use \Symfony\Component\HttpFoundation\Response;
 use \Neomerx\Limoncello\Errors\ExceptionThrower;
-use \Neomerx\JsonApi\Parameters\ParametersFactory;
-use \Neomerx\JsonApi\Encoder\Factory\EncoderFactory;
 use \Neomerx\Limoncello\Contracts\IntegrationInterface;
 use \Neomerx\JsonApi\Contracts\Schema\ContainerInterface;
+use \Neomerx\JsonApi\Contracts\Factories\FactoryInterface;
 use \Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
 use \Neomerx\JsonApi\Parameters\RestrictiveParameterChecker;
 use \Neomerx\JsonApi\Contracts\Responses\ResponsesInterface;
@@ -38,7 +36,6 @@ use \Neomerx\JsonApi\Contracts\Parameters\ParametersParserInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\ParameterCheckerInterface;
 use \Neomerx\JsonApi\Contracts\Integration\ExceptionThrowerInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\Headers\MediaTypeInterface;
-use \Neomerx\JsonApi\Contracts\Parameters\ParametersFactoryInterface;
 use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
 
 /**
@@ -173,9 +170,9 @@ trait JsonApiTrait
     private $schemaContainer;
 
     /**
-     * @var ParametersFactoryInterface
+     * @var FactoryInterface
      */
-    private $parametersFactory;
+    private $factory;
 
     /**
      * Init integrations with JSON API implementation.
@@ -184,7 +181,7 @@ trait JsonApiTrait
      */
     protected function initJsonApiSupport()
     {
-        $this->parametersFactory = new ParametersFactory();
+        $this->factory = new Factory();
 
         // integrations with framework
         $this->responses        = new Responses($this->getIntegration());
@@ -192,8 +189,8 @@ trait JsonApiTrait
 
         // init support from json-api implementation
         $this->initCodecMatcher();
-        $this->parametersParser    = $this->parametersFactory->createParametersParser();
-        $this->supportedExtensions = $this->parametersFactory->createSupportedExtensions($this->extensions);
+        $this->parametersParser    = $this->factory->createParametersParser();
+        $this->supportedExtensions = $this->factory->createSupportedExtensions($this->extensions);
         $this->parametersChecker   = new RestrictiveParameterChecker(
             $this->exceptionThrower,
             $this->codecMatcher,
@@ -222,7 +219,7 @@ trait JsonApiTrait
 
             $schemas = isset($config[C::SCHEMAS]) === true ? $config[C::SCHEMAS] : [];
 
-            $container = $this->schemaContainer = (new SchemaFactory())->createContainer($schemas);
+            $this->schemaContainer = $this->factory->createContainer($schemas);
 
             $options = isset($config[C::JSON][C::JSON_OPTIONS]) === true ?
                 $config[C::JSON][C::JSON_OPTIONS] : C::JSON_OPTIONS_DEFAULT;
@@ -239,20 +236,15 @@ trait JsonApiTrait
             $urlPrefix = isset($config[C::JSON][C::JSON_URL_PREFIX]) === true ?
                 $config[C::JSON][C::JSON_URL_PREFIX] : null;
 
-            $encoderFactory    = new EncoderFactory();
-            $parametersFactory = new ParametersFactory();
             return new Encoder(
-                new DocumentFactory(),
-                $encoderFactory,
-                $encoderFactory,
-                $parametersFactory,
-                $container,
+                $this->factory,
+                $schemas,
                 new EncoderOptions($options, $urlPrefix, $isShowVersion, $versionMeta, $depth)
             );
         };
 
         $this->codecMatcher = new CodecMatcher();
-        $jsonApiType        = $this->parametersFactory->createMediaType(
+        $jsonApiType        = $this->factory->createMediaType(
             MediaTypeInterface::JSON_API_TYPE,
             MediaTypeInterface::JSON_API_SUB_TYPE
         );
