@@ -248,11 +248,20 @@ trait JsonApiTrait
             MediaTypeInterface::JSON_API_TYPE,
             MediaTypeInterface::JSON_API_SUB_TYPE
         );
+        $jsonApiTypeUtf8    = $this->factory->createMediaType(
+            MediaTypeInterface::JSON_API_TYPE,
+            MediaTypeInterface::JSON_API_SUB_TYPE,
+            ['charset' => 'UTF-8']
+        );
+
+        $decoderClosure = function () {
+            return new ArrayDecoder();
+        };
 
         $this->codecMatcher->registerEncoder($jsonApiType, $jsonApiEncoder);
-        $this->codecMatcher->registerDecoder($jsonApiType, function () {
-            return new ArrayDecoder();
-        });
+        $this->codecMatcher->registerDecoder($jsonApiType, $decoderClosure);
+        $this->codecMatcher->registerEncoder($jsonApiTypeUtf8, $jsonApiEncoder);
+        $this->codecMatcher->registerDecoder($jsonApiTypeUtf8, $decoderClosure);
     }
 
     /**
