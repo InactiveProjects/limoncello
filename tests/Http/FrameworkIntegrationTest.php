@@ -50,7 +50,9 @@ class FrameworkIntegrationTest extends BaseTestCase
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockIntegration->shouldReceive('getCurrentRequest')->once()->withNoArgs()->andReturn($mockCurRequest);
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockCurRequest->shouldReceive('getContent')->once()->withNoArgs()->andReturn('content');
 
         $this->assertEquals('content', $this->integration->getContent());
@@ -65,7 +67,9 @@ class FrameworkIntegrationTest extends BaseTestCase
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockIntegration->shouldReceive('getCurrentRequest')->once()->withNoArgs()->andReturn($mockCurRequest);
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockCurRequest->shouldReceive('getContent')->once()->withNoArgs()->andReturn('');
 
         $this->assertNull($this->integration->getContent());
@@ -81,6 +85,7 @@ class FrameworkIntegrationTest extends BaseTestCase
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockIntegration->shouldReceive('getCurrentRequest')->once()->withNoArgs()->andReturn($curRequest);
 
         $this->assertEquals($queryParams, $this->integration->getQueryParameters());
@@ -96,6 +101,7 @@ class FrameworkIntegrationTest extends BaseTestCase
 
         /** @var MockInterface $mockIntegration */
         $mockIntegration = $this->integration;
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
         $mockIntegration->shouldReceive('getCurrentRequest')->once()->withNoArgs()->andReturn($curRequest);
 
         $this->assertEquals('value', $this->integration->getHeader('key'));

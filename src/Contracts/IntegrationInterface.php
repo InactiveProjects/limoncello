@@ -19,7 +19,6 @@
 use \Symfony\Component\HttpFoundation\Request;
 use \Neomerx\JsonApi\Contracts\Integration\CurrentRequestInterface;
 use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
-use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
 
 /**
  * @package Neomerx\Limoncello
@@ -41,11 +40,30 @@ interface IntegrationInterface extends NativeResponsesInterface, CurrentRequestI
     public function getCurrentRequest();
 
     /**
-     * Declare JSON API extensions supported in current controller/request/response.
+     * Get value from container by key.
      *
-     * @param SupportedExtensionsInterface $extensions
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public function getFromContainer($key);
+
+    /**
+     * Set value in container.
+     *
+     * @param string $key
+     * @param mixed  $value
      *
      * @return void
      */
-    public function declareSupportedExtensions(SupportedExtensionsInterface $extensions);
+    public function setInContainer($key, $value);
+
+    /**
+     * Check if container has value by key.
+     *
+     * @param string $key
+     *
+     * @return bool
+     */
+    public function hasInContainer($key);
 }

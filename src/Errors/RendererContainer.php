@@ -18,20 +18,22 @@
 
 use \Closure;
 use \Symfony\Component\HttpFoundation\Response;
+use \Neomerx\Limoncello\Contracts\IntegrationInterface;
 use \Symfony\Component\HttpKernel\Exception\HttpException;
+use \Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
+use \Neomerx\JsonApi\Contracts\Exceptions\RendererInterface;
+use \Neomerx\JsonApi\Contracts\Responses\ResponsesInterface;
 use \Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use \Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use \Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use \Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
-use \Neomerx\JsonApi\Contracts\Parameters\ParametersFactoryInterface;
 use \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use \Neomerx\JsonApi\Exceptions\RenderContainer as BaseRenderContainer;
 use \Symfony\Component\HttpKernel\Exception\NotAcceptableHttpException;
 use \Symfony\Component\HttpKernel\Exception\LengthRequiredHttpException;
 use \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use \Neomerx\JsonApi\Exceptions\RendererContainer as BaseRendererContainer;
 use \Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use \Symfony\Component\HttpKernel\Exception\PreconditionFailedHttpException;
 use \Symfony\Component\HttpKernel\Exception\PreconditionRequiredHttpException;
@@ -42,21 +44,34 @@ use \Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class RenderContainer extends BaseRenderContainer
+class RendererContainer extends BaseRendererContainer
 {
     /**
-     * @param ParametersFactoryInterface $factory
-     * @param NativeResponsesInterface $responses
-     * @param Closure                  $extensionsClosure
-     * @param int                      $defaultStatusCode
+     * @var IntegrationInterface
+     */
+    private $integration;
+
+    /**
+     * @var ResponsesInterface
+     */
+    private $responses;
+
+    /**
+     * @var CodecMatcherInterface
+     */
+    private $codecMatcher;
+
+    /**
+     * @param IntegrationInterface $integration
+     * @param int                  $defaultStatusCode
      */
     public function __construct(
-        ParametersFactoryInterface $factory,
-        NativeResponsesInterface $responses,
-        Closure $extensionsClosure,
+        IntegrationInterface $integration,
         $defaultStatusCode = Response::HTTP_INTERNAL_SERVER_ERROR
     ) {
-        parent::__construct($factory, $responses, $extensionsClosure, $defaultStatusCode);
+        $this->integration = $integration;
+
+        parent::__construct($this->createNoContentRenderer($defaultStatusCode));
 
         $this->registerHttpCodeMapping([
             HttpException::class                        => Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -75,17 +90,61 @@ class RenderContainer extends BaseRenderContainer
             PreconditionRequiredHttpException::class    => Response::HTTP_PRECONDITION_REQUIRED,
             UnsupportedMediaTypeHttpException::class    => Response::HTTP_UNSUPPORTED_MEDIA_TYPE,
         ]);
-
-        $this->registerJsonApiErrorMapping([
-            JsonApiException::class                     => Response::HTTP_BAD_REQUEST,
-        ]);
     }
 
     /**
-     * @inheritdoc
+     * @return ResponsesInterface
      */
-    public function getErrorsRender($statusCode)
+    protected function getResponses()
     {
-        return parent::getErrorsRender($statusCode);
+        if ($this->responses === null) {
+            $this->responses = $this->integration->getFromContainer(ResponsesInterface::class);
+        }
+
+        return $this->responses;
+    }
+
+    /**
+     * @return CodecMatcherInterface
+     */
+    protected function getCodecMatcher()
+    {
+        if ($this->codecMatcher === null) {
+            $this->codecMatcher = $this->integration->getFromContainer(CodecMatcherInterface::class);
+        }
+
+        return $this->codecMatcher;
+    }
+
+    /**
+     * @param int $statusCode
+     *
+     * @return RendererInterface
+     */
+    public function createNoContentRenderer($statusCode)
+    {
+        return new NoContentRenderer($this->getResponses(), $statusCode);
+    }
+
+    /**
+     * @param int     $statusCode
+     * @param Closure $converter
+     *
+     * @return RendererInterface
+     */
+    public function createConvertContentRenderer($statusCode, Closure $converter)
+    {
+        return new ConvertContentRenderer($this->getCodecMatcher(), $this->getResponses(), $statusCode, $converter);
+    }
+
+    /**
+     * @param array $exToCodeMapping
+     */
+    public function registerHttpCodeMapping(array $exToCodeMapping)
+    {
+        foreach ($exToCodeMapping as $exClass => $statusCode) {
+            $renderer = $this->createNoContentRenderer($statusCode);
+            $this->registerRenderer($exClass, $renderer);
+        }
     }
 }

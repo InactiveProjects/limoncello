@@ -18,13 +18,14 @@
 
 use \Mockery;
 use \Mockery\MockInterface;
-use \Neomerx\JsonApi\Factories\Factory;
+use \Neomerx\JsonApi\Document\Error;
 use \Neomerx\Tests\Limoncello\BaseTestCase;
-use \Neomerx\Limoncello\Errors\RenderContainer;
 use \Symfony\Component\HttpFoundation\Response;
-use \Neomerx\JsonApi\Contracts\Exceptions\RenderContainerInterface;
-use \Neomerx\JsonApi\Contracts\Integration\NativeResponsesInterface;
-use \Neomerx\JsonApi\Contracts\Parameters\SupportedExtensionsInterface;
+use \Neomerx\Limoncello\Errors\RendererContainer;
+use \Neomerx\JsonApi\Parameters\Headers\MediaType;
+use \Neomerx\Limoncello\Contracts\IntegrationInterface;
+use \Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
+use \Neomerx\JsonApi\Contracts\Responses\ResponsesInterface;
 use \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 /**
@@ -36,7 +37,7 @@ class RenderContainerTest extends BaseTestCase
     const DEFAULT_CODE = 567;
 
     /**
-     * @var RenderContainerInterface
+     * @var RendererContainer
      */
     private $container;
 
@@ -46,29 +47,32 @@ class RenderContainerTest extends BaseTestCase
     private $mockResponses;
 
     /**
+     * @var MockInterface
+     */
+    private $mockCodecMatcher;
+
+    /**
      * Set up test.
      */
     protected function setUp()
     {
         parent::setUp();
 
-        $mockSupExt = Mockery::mock(SupportedExtensionsInterface::class);
-        $mockSupExt->shouldReceive('getExtensions')->once()->withNoArgs()->andReturn([]);
-        $extensionsClosure = function () use ($mockSupExt) {
-            return $mockSupExt;
-        };
+        $mockIntegration = Mockery::mock(IntegrationInterface::class);
+        $this->mockResponses = Mockery::mock(ResponsesInterface::class);
+        $this->mockCodecMatcher = Mockery::mock(CodecMatcherInterface::class);
 
-        $this->mockResponses = Mockery::mock(NativeResponsesInterface::class);
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $mockIntegration->shouldReceive('getFromContainer')->zeroOrMoreTimes()
+            ->with(ResponsesInterface::class)->andReturn($this->mockResponses);
 
-        /** @var NativeResponsesInterface $mockResponses */
-        $mockResponses = $this->mockResponses;
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $mockIntegration->shouldReceive('getFromContainer')->zeroOrMoreTimes()
+            ->with(CodecMatcherInterface::class)->andReturn($this->mockCodecMatcher);
 
-        $this->container = new RenderContainer(
-            new Factory(),
-            $mockResponses,
-            $extensionsClosure,
-            self::DEFAULT_CODE
-        );
+        /** @var IntegrationInterface $mockIntegration */
+
+        $this->container = new RendererContainer($mockIntegration, self::DEFAULT_CODE);
     }
 
     /**
@@ -76,11 +80,36 @@ class RenderContainerTest extends BaseTestCase
      */
     public function testRegisterMapping()
     {
-        $this->mockResponses->shouldReceive('createResponse')->once()
-            ->withArgs([null, Response::HTTP_TOO_MANY_REQUESTS, Mockery::any()])
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $this->mockResponses->shouldReceive('getResponse')->once()
+            ->withArgs([Response::HTTP_TOO_MANY_REQUESTS, Mockery::any(), null, [], []])
             ->andReturn('error: '. Response::HTTP_TOO_MANY_REQUESTS);
 
-        $render = $this->container->getRender(new TooManyRequestsHttpException());
-        $this->assertEquals('error: ' . Response::HTTP_TOO_MANY_REQUESTS, $render());
+        $exception = new TooManyRequestsHttpException();
+        $render    = $this->container->getRenderer(get_class($exception));
+        $render->withMediaType(new MediaType(MediaType::JSON_API_TYPE, MediaType::JSON_API_SUB_TYPE));
+        $this->assertEquals('error: ' . Response::HTTP_TOO_MANY_REQUESTS, $render->render($exception));
+    }
+
+    /**
+     * Test createConvertContentRenderer.
+     */
+    public function testCreateConvertContentRenderer()
+    {
+        $renderer = $this->container->createConvertContentRenderer(Response::HTTP_BAD_REQUEST, function () {
+            return new Error(123);
+        });
+
+        $this->assertNotNull($renderer);
+        $renderer->withMediaType(new MediaType(MediaType::JSON_API_TYPE, MediaType::JSON_API_SUB_TYPE));
+
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $this->mockCodecMatcher->shouldReceive('getEncoder')->once()->withAnyArgs()->andReturnSelf();
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $this->mockCodecMatcher->shouldReceive('encodeError')->once()->withAnyArgs()->andReturn('anything');
+        /** @noinspection PhpMethodParametersCountMismatchInspection */
+        $this->mockResponses->shouldReceive('getResponse')->once()->withAnyArgs()->andReturn('result');
+
+        $this->assertEquals('result', $renderer->render(new \Exception()));
     }
 }
