@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\Contracts\Auth;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,27 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+interface TokenCodecInterface
 {
-    /**
-     * Set up test.
-     */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        Container::setInstance(new Container());
-    }
+    /** Provider name */
+    const NAME = 'limoncello';
 
     /**
-     * Tear down test.
+     * @param Model $user
+     *
+     * @return string
      */
-    protected function tearDown()
-    {
-        parent::tearDown();
-        Mockery::close();
-    }
+    public function encode(Model $user);
+
+    /**
+     * @param string $token
+     *
+     * @return AccountInterface
+     */
+    public function decode($token);
 }

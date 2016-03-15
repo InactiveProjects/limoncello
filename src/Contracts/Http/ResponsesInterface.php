@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\Contracts\Http;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,20 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
+use Neomerx\Limoncello\Contracts\JsonApi\PagedDataInterface;
 
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+interface ResponsesInterface extends \Neomerx\JsonApi\Contracts\Http\ResponsesInterface
 {
     /**
-     * Set up test.
+     * Get response for paged data.
+     *
+     * @param PagedDataInterface $data
+     * @param int                $statusCode
+     *
+     * @return mixed
      */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        Container::setInstance(new Container());
-    }
-
-    /**
-     * Tear down test.
-     */
-    protected function tearDown()
-    {
-        parent::tearDown();
-        Mockery::close();
-    }
+    public function getPagedDataResponse(PagedDataInterface $data, $statusCode = self::HTTP_OK);
 }

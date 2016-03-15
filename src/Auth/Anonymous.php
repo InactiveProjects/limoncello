@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\Auth;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,35 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
+use Illuminate\Auth\GenericUser;
+use Neomerx\Limoncello\Contracts\Auth\AccountInterface;
 
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+class Anonymous extends GenericUser implements AccountInterface
 {
     /**
-     * Set up test.
+     * @inheritdoc
      */
-    protected function setUp()
+    public function __construct(array $attributes = [])
     {
-        parent::setUp();
-
-        Container::setInstance(new Container());
+        parent::__construct($attributes);
     }
 
     /**
-     * Tear down test.
+     * @inheritdoc
      */
-    protected function tearDown()
+    public function user()
     {
-        parent::tearDown();
-        Mockery::close();
+        return null;
+    }
+
+    /** @noinspection PhpMissingParentCallCommonInspection
+     * @return null
+     */
+    public function getAuthIdentifier()
+    {
+        return null;
     }
 }

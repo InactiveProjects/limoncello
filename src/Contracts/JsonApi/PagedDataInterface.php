@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\Contracts\JsonApi;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,25 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
+use Neomerx\JsonApi\Contracts\Document\LinkInterface;
 
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+interface PagedDataInterface
 {
     /**
-     * Set up test.
+     * @return array
      */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        Container::setInstance(new Container());
-    }
+    public function getData();
 
     /**
-     * Tear down test.
+     * @return LinkInterface[]
      */
-    protected function tearDown()
-    {
-        parent::tearDown();
-        Mockery::close();
-    }
+    public function getLinks();
+
+    /**
+     * @return mixed
+     */
+    public function getMeta();
 }

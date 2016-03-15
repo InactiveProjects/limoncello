@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\JsonApi\Decoder;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,31 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
-
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+class RelationshipsObject
 {
     /**
-     * Set up test.
+     * @var ResourceIdentifierObject[]|ResourceIdentifierObject|null|[]
      */
-    protected function setUp()
-    {
-        parent::setUp();
+    private $data;
 
-        Container::setInstance(new Container());
+    /**
+     * Constructor.
+     *
+     * @param ResourceIdentifierObject[]|ResourceIdentifierObject|null|[] $data
+     */
+    public function __construct($data)
+    {
+        $this->data = $data;
     }
 
     /**
-     * Tear down test.
+     * @return ResourceIdentifierObject|ResourceIdentifierObject[]|null|[]
      */
-    protected function tearDown()
+    public function getData()
     {
-        parent::tearDown();
-        Mockery::close();
+        return $this->data;
     }
 }

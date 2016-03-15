@@ -1,4 +1,4 @@
-<?php namespace Neomerx\Tests\Limoncello;
+<?php namespace Neomerx\Limoncello\Contracts\JsonApi;
 
 /**
  * Copyright 2015-2016 info@neomerx.com (www.neomerx.com)
@@ -16,31 +16,27 @@
  * limitations under the License.
  */
 
-use Illuminate\Container\Container;
-use Mockery;
-use PHPUnit_Framework_TestCase;
-
 /**
- * @package Neomerx\Tests\Limoncello
+ * @package Neomerx\Limoncello
  */
-abstract class BaseTestCase extends PHPUnit_Framework_TestCase
+interface FactoryInterface extends \Neomerx\JsonApi\Contracts\Factories\FactoryInterface
 {
     /**
-     * Set up test.
+     * @param array $data
+     * @param array $links
+     * @param mixed $meta
+     *
+     * @return PagedDataInterface
      */
-    protected function setUp()
-    {
-        parent::setUp();
-
-        Container::setInstance(new Container());
-    }
+    public function createPagedData(array $data, array $links = [], $meta = null);
 
     /**
-     * Tear down test.
+     * @param bool $isAddFirst
+     * @param bool $isAddPrev
+     * @param bool $isAddNext
+     * @param bool $isAddLast
+     *
+     * @return PagingStrategyInterface
      */
-    protected function tearDown()
-    {
-        parent::tearDown();
-        Mockery::close();
-    }
+    public function createPagingStrategy($isAddFirst = true, $isAddPrev = true, $isAddNext = true, $isAddLast = true);
 }
