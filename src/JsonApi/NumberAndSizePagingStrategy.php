@@ -20,7 +20,7 @@ use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Neomerx\JsonApi\Contracts\Document\DocumentInterface;
 use Neomerx\JsonApi\Contracts\Document\LinkInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersParserInterface;
+use Neomerx\JsonApi\Contracts\Http\Query\QueryParametersParserInterface;
 use Neomerx\Limoncello\Contracts\JsonApi\FactoryInterface;
 use Neomerx\Limoncello\Contracts\JsonApi\PagingStrategyInterface;
 
@@ -174,7 +174,7 @@ class NumberAndSizePagingStrategy implements PagingStrategyInterface
         $data     = $paginator->items();
         $pageSize = $paginator->perPage();
         $meta     = $totalPages <= 1 ? null : [
-            ParametersParserInterface::PARAM_PAGE => [
+            QueryParametersParserInterface::PARAM_PAGE => [
                 self::PARAM_PAGING_SIZE   => $pageSize,
                 self::PARAM_PAGING_NUMBER => $currentPage,
                 self::PARAM_PAGING_TOTAL  => $totalPages,
@@ -217,7 +217,7 @@ class NumberAndSizePagingStrategy implements PagingStrategyInterface
 
             $this->buildUrlClosure = function ($pageNumber) use ($url, $parameters, $separator, $pageSize) {
                 $paramsWithPaging = array_merge($parameters, [
-                    ParametersParserInterface::PARAM_PAGE => [
+                    QueryParametersParserInterface::PARAM_PAGE => [
                         self::PARAM_PAGING_SIZE   => $pageSize,
                         self::PARAM_PAGING_NUMBER => $pageNumber,
                     ]

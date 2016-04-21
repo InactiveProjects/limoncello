@@ -25,10 +25,11 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
+use Neomerx\JsonApi\Contracts\Http\Headers\HeaderParametersInterface;
+use Neomerx\JsonApi\Contracts\Http\Headers\HeadersCheckerInterface;
 use Neomerx\JsonApi\Contracts\Http\Headers\MediaTypeInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\HeadersCheckerInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\SupportedExtensionsInterface;
+use Neomerx\JsonApi\Contracts\Http\Headers\SupportedExtensionsInterface;
 use Neomerx\JsonApi\Encoder\EncoderOptions;
 use Neomerx\JsonApi\Http\Request as RequestWrapper;
 use Neomerx\Limoncello\Auth\Anonymous;
@@ -109,9 +110,14 @@ class LaravelServiceProvider extends ServiceProvider
     private $headersChecker = false;
 
     /**
-     * @var bool|ParametersInterface
+     * @var bool|EncodingParametersInterface
      */
-    private $requestParameters = false;
+    private $queryParameters = false;
+
+    /**
+     * @var bool|HeaderParametersInterface
+     */
+    private $headerParameters = false;
 
     /**
      * @var bool|SupportedExtensionsInterface
@@ -199,8 +205,12 @@ class LaravelServiceProvider extends ServiceProvider
             return $this->getHeadersChecker();
         });
 
-        $this->app->singleton(ParametersInterface::class, function () {
-            return $this->getRequestParameters();
+        $this->app->singleton(EncodingParametersInterface::class, function () {
+            return $this->getQueryParameters();
+        });
+
+        $this->app->singleton(HeaderParametersInterface::class, function () {
+            return $this->getHeaderParameters();
         });
 
         $this->app->singleton(ResponsesInterface::class, function () {
@@ -244,9 +254,8 @@ class LaravelServiceProvider extends ServiceProvider
                 $request->setRouteResolver($currentRequest->getRouteResolver());
                 $currentRequest->getSession() === null ?: $request->setSession($currentRequest->getSession());
                 $request->setJsonApiFactory($this->getFactory());
-                $request->setRequestParameters($this->getRequestParameters());
+                $request->setQueryParameters($this->getQueryParameters());
                 $request->setSchemaContainer($this->getSchemaContainer());
-                $request->setCodecMatcher($this->getCodecMatcher());
             });
         });
     }
@@ -297,6 +306,10 @@ class LaravelServiceProvider extends ServiceProvider
     protected function getRequestWrapper()
     {
         if ($this->requestWrapper === false) {
+            $getMethod = function () {
+                $method = $this->getRequest()->getMethod();
+                return $method;
+            };
             $getHeader = function ($name) {
                 $header = $this->getRequest()->headers->get($name, null, false);
                 return $header;
@@ -306,7 +319,7 @@ class LaravelServiceProvider extends ServiceProvider
                 return $queryParams;
             };
 
-            $this->requestWrapper = new RequestWrapper($getHeader, $getQueryParams);
+            $this->requestWrapper = new RequestWrapper($getMethod, $getHeader, $getQueryParams);
         }
 
         return $this->requestWrapper;
@@ -414,15 +427,29 @@ class LaravelServiceProvider extends ServiceProvider
     }
 
     /**
-     * @return ParametersInterface
+     * @return EncodingParametersInterface
      */
-    protected function getRequestParameters()
+    protected function getQueryParameters()
     {
-        if ($this->requestParameters === false) {
-            $this->requestParameters = $this->getFactory()->createParametersParser()->parse($this->getRequestWrapper());
+        if ($this->queryParameters === false) {
+            $this->queryParameters = $this->getFactory()
+                ->createQueryParametersParser()->parse($this->getRequestWrapper());
         }
 
-        return $this->requestParameters;
+        return $this->queryParameters;
+    }
+
+    /**
+     * @return HeaderParametersInterface
+     */
+    protected function getHeaderParameters()
+    {
+        if ($this->headerParameters === false) {
+            $this->headerParameters = $this->getFactory()
+                ->createHeaderParametersParser()->parse($this->getRequestWrapper());
+        }
+
+        return $this->headerParameters;
     }
 
     /**
@@ -456,13 +483,11 @@ class LaravelServiceProvider extends ServiceProvider
     protected function getResponses()
     {
         if ($this->responses === false) {
-            $parameters = $this->getRequestParameters();
-            $matcher    = $this->getCodecMatcher();
-
-            $matcher->matchEncoder($parameters->getAcceptHeader());
+            $matcher = $this->getCodecMatcher();
+            $matcher->matchEncoder($this->getHeaderParameters()->getAcceptHeader());
 
             $this->responses = new Responses(
-                $parameters,
+                $this->getQueryParameters(),
                 $matcher->getEncoderRegisteredMatchedType(),
                 $this->getSupportedExtensions(),
                 $matcher->getEncoder(),

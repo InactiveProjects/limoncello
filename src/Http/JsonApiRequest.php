@@ -22,11 +22,10 @@ use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Factory as ValidationFactory;
 use Illuminate\Validation\Validator;
-use Neomerx\JsonApi\Contracts\Codec\CodecMatcherInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 use Neomerx\JsonApi\Contracts\Factories\FactoryInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersCheckerInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersParserInterface as PPI;
+use Neomerx\JsonApi\Contracts\Http\Query\QueryCheckerInterface;
+use Neomerx\JsonApi\Contracts\Http\Query\QueryParametersParserInterface as PPI;
 use Neomerx\JsonApi\Exceptions\JsonApiException;
 use Neomerx\Limoncello\Contracts\JsonApi\SchemaContainerInterface as SchemaContainerInterface;
 use Neomerx\Limoncello\Contracts\JsonApi\SchemaInterface;
@@ -65,7 +64,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
     const RULE_ALLOWED_FILTERING_PARAMS = 5;
 
     /**
-     * @var ParametersInterface
+     * @var EncodingParametersInterface
      */
     private $requestParameters;
 
@@ -73,11 +72,6 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
      * @var SchemaContainerInterface
      */
     private $schemaContainer;
-
-    /**
-     * @var CodecMatcherInterface
-     */
-    private $codecMatcher;
 
     /**
      * @var FactoryInterface
@@ -120,9 +114,9 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
     private $belongsToMany = [];
 
     /**
-     * @param ParametersInterface $requestParameters
+     * @param EncodingParametersInterface $requestParameters
      */
-    public function setRequestParameters($requestParameters)
+    public function setQueryParameters($requestParameters)
     {
         $this->requestParameters = $requestParameters;
     }
@@ -133,14 +127,6 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
     public function setSchemaContainer($schemaContainer)
     {
         $this->schemaContainer = $schemaContainer;
-    }
-
-    /**
-     * @param CodecMatcherInterface $codecMatcher
-     */
-    public function setCodecMatcher($codecMatcher)
-    {
-        $this->codecMatcher = $codecMatcher;
     }
 
     /**
@@ -192,7 +178,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
     }
 
     /**
-     * @return ParametersInterface
+     * @return EncodingParametersInterface
      */
     public function getParameters()
     {
@@ -269,7 +255,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
                 $get($rules, self::RULE_ALLOWED_FILTERING_PARAMS, [])
             );
 
-            $parametersChecker->check($params);
+            $parametersChecker->checkQuery($params);
         }
     }
 
@@ -362,7 +348,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
      * @param array|null $pagingParameters
      * @param array|null $filteringParameters
      *
-     * @return ParametersCheckerInterface
+     * @return QueryCheckerInterface
      */
     protected function createParametersChecker(
         $allowUnrecognized = false,
@@ -372,8 +358,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
         array $pagingParameters = null,
         array $filteringParameters = null
     ) {
-        $parametersChecker = $this->factory->createParametersChecker(
-            $this->codecMatcher,
+        $parametersChecker = $this->factory->createQueryChecker(
             $allowUnrecognized,
             $includePaths,
             $fieldSets,

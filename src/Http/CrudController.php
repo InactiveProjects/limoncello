@@ -19,7 +19,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller as BaseController;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 use Neomerx\JsonApi\Exceptions\JsonApiException;
 use Neomerx\Limoncello\Contracts\Api\CrudInterface;
 use Neomerx\Limoncello\Contracts\Http\ResponsesInterface;
@@ -144,11 +144,11 @@ class CrudController extends BaseController
     }
 
     /**
-     * @param ParametersInterface $parameters
+     * @param EncodingParametersInterface $parameters
      *
      * @return PagedDataInterface
      */
-    protected function callApiIndex(ParametersInterface $parameters)
+    protected function callApiIndex(EncodingParametersInterface $parameters)
     {
         $resources = $this->getApi()->index($parameters);
 
@@ -156,12 +156,12 @@ class CrudController extends BaseController
     }
 
     /**
-     * @param int                 $idx
-     * @param ParametersInterface $parameters
+     * @param int                         $idx
+     * @param EncodingParametersInterface $parameters
      *
      * @return Model
      */
-    protected function callApiRead($idx, ParametersInterface $parameters)
+    protected function callApiRead($idx, EncodingParametersInterface $parameters)
     {
         $model = $this->getApi()->read($idx, $parameters);
 

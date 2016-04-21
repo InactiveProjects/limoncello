@@ -70,9 +70,8 @@ class LumenServiceProvider extends LaravelServiceProvider
             $request->setRouteResolver($currentRequest->getRouteResolver());
             $currentRequest->getSession() === null ?: $request->setSession($currentRequest->getSession());
             $request->setJsonApiFactory($this->getFactory());
-            $request->setRequestParameters($this->getRequestParameters());
+            $request->setQueryParameters($this->getQueryParameters());
             $request->setSchemaContainer($this->getSchemaContainer());
-            $request->setCodecMatcher($this->getCodecMatcher());
 
             // lumen do not call `validate` from `ValidatesWhenResolved` so have to do it manually
             $request->validate();

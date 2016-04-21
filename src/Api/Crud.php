@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Response;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 use Neomerx\JsonApi\Exceptions\JsonApiException;
 use Neomerx\Limoncello\Contracts\Api\CrudAuthorizationsInterface;
 use Neomerx\Limoncello\Contracts\Api\CrudInterface;
@@ -102,7 +102,7 @@ class Crud implements CrudInterface
     /**
      * @inheritdoc
      */
-    public function index(ParametersInterface $parameters = null, array $relations = [])
+    public function index(EncodingParametersInterface $parameters = null, array $relations = [])
     {
         $builder = $this->createBuilderOnIndex($relations, $parameters);
 
@@ -116,7 +116,7 @@ class Crud implements CrudInterface
     /**
      * @inheritdoc
      */
-    public function read($index, ParametersInterface $parameters = null, array $relations = [])
+    public function read($index, EncodingParametersInterface $parameters = null, array $relations = [])
     {
         $builder = $this->createBuilderOnRead($relations, $parameters);
 
@@ -280,12 +280,12 @@ class Crud implements CrudInterface
     }
 
     /**
-     * @param array                    $relations
-     * @param ParametersInterface|null $parameters
+     * @param array                            $relations
+     * @param EncodingParametersInterface|null $parameters
      *
      * @return Builder
      */
-    protected function createBuilderOnRead(array $relations = [], ParametersInterface $parameters = null)
+    protected function createBuilderOnRead(array $relations = [], EncodingParametersInterface $parameters = null)
     {
         $parameters ?: null;
 
@@ -298,12 +298,12 @@ class Crud implements CrudInterface
     }
 
     /**
-     * @param array                    $relations
-     * @param ParametersInterface|null $parameters
+     * @param array                            $relations
+     * @param EncodingParametersInterface|null $parameters
      *
      * @return Builder
      */
-    protected function createBuilderOnIndex(array $relations = [], ParametersInterface $parameters = null)
+    protected function createBuilderOnIndex(array $relations = [], EncodingParametersInterface $parameters = null)
     {
         $parameters ?: null;
 
@@ -316,12 +316,12 @@ class Crud implements CrudInterface
     }
 
     /**
-     * @param Builder             $builder
-     * @param ParametersInterface $parameters
+     * @param Builder                     $builder
+     * @param EncodingParametersInterface $parameters
      *
      * @return PagedDataInterface
      */
-    protected function readOnIndex(Builder $builder, ParametersInterface $parameters = null)
+    protected function readOnIndex(Builder $builder, EncodingParametersInterface $parameters = null)
     {
         $parameters ?: null;
 
@@ -893,12 +893,12 @@ class Crud implements CrudInterface
     /**
      * Apply input JSON API parameters to builder on resource reading.
      *
-     * @param ParametersInterface $parameters
-     * @param Builder             $builder
+     * @param EncodingParametersInterface $parameters
+     * @param Builder                     $builder
      *
      * @return void
      */
-    protected function applyParametersToBuilder(ParametersInterface $parameters, Builder $builder)
+    protected function applyParametersToBuilder(EncodingParametersInterface $parameters, Builder $builder)
     {
         $parameters && $builder ?: null;
     }

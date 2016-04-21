@@ -18,7 +18,7 @@
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 
 /**
  * @package Neomerx\Limoncello
@@ -48,12 +48,12 @@ class FilterBuilder
     }
 
     /**
-     * @param Builder             $builder
-     * @param ParametersInterface $parameters
+     * @param Builder                     $builder
+     * @param EncodingParametersInterface $parameters
      *
      * @return void
      */
-    public function build(Builder $builder, ParametersInterface $parameters)
+    public function build(Builder $builder, EncodingParametersInterface $parameters)
     {
         $filterParams = $parameters->getFilteringParameters();
         if (empty($filterParams) === false && is_array($filterParams)) {

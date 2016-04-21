@@ -19,9 +19,9 @@
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Neomerx\JsonApi\Contracts\Encoder\EncoderInterface;
-use Neomerx\JsonApi\Contracts\Encoder\EncodingParametersInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 use Neomerx\JsonApi\Contracts\Http\Headers\MediaTypeInterface;
-use Neomerx\JsonApi\Contracts\Http\Parameters\SupportedExtensionsInterface;
+use Neomerx\JsonApi\Contracts\Http\Headers\SupportedExtensionsInterface;
 use Neomerx\JsonApi\Contracts\Schema\ContainerInterface;
 use Neomerx\JsonApi\Http\Responses as JsonApiResponses;
 use Neomerx\Limoncello\Contracts\Http\ResponsesInterface;

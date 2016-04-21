@@ -17,7 +17,7 @@
  */
 
 use Illuminate\Database\Eloquent\Model;
-use Neomerx\JsonApi\Contracts\Http\Parameters\ParametersInterface;
+use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
 use Neomerx\Limoncello\Contracts\JsonApi\PagedDataInterface;
 use Neomerx\Limoncello\Http\JsonApiRequest;
 
@@ -32,21 +32,21 @@ interface CrudInterface
     public function getModelClass();
 
     /**
-     * @param ParametersInterface $parameters
-     * @param array               $relations
+     * @param EncodingParametersInterface $parameters
+     * @param array                       $relations
      *
      * @return PagedDataInterface
      */
-    public function index(ParametersInterface $parameters = null, array $relations = []);
+    public function index(EncodingParametersInterface $parameters = null, array $relations = []);
 
     /**
-     * @param int                 $index
-     * @param ParametersInterface $parameters
-     * @param array               $relations
+     * @param int                         $index
+     * @param EncodingParametersInterface $parameters
+     * @param array                       $relations
      *
      * @return Model
      */
-    public function read($index, ParametersInterface $parameters = null, array $relations = []);
+    public function read($index, EncodingParametersInterface $parameters = null, array $relations = []);
 
     /**
      * @param int $index
