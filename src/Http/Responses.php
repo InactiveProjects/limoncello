@@ -93,8 +93,13 @@ class Responses extends JsonApiResponses implements ResponsesInterface
     /**
      * @inheritdoc
      */
-    public function getContentResponse($data, $statusCode = JsonApiResponses::HTTP_OK, $links = null, $meta = null)
-    {
+    public function getContentResponse(
+        $data,
+        $statusCode = JsonApiResponses::HTTP_OK,
+        $links = null,
+        $meta = null,
+        array $headers = []
+    ) {
         if ($data instanceof Collection) {
             $data = $data->all();
         }

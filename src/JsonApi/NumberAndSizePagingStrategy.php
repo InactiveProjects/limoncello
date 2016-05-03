@@ -42,7 +42,12 @@ class NumberAndSizePagingStrategy implements PagingStrategyInterface
     /**
      * Paging param name.
      */
-    const PARAM_PAGING_TOTAL = 'total';
+    const PARAM_PAGING_TOTAL_PAGES = 'total-pages';
+
+    /**
+     * Paging param name.
+     */
+    const PARAM_PAGING_TOTAL_ITEMS = 'total-items';
 
     /**
      * @var FactoryInterface
@@ -171,16 +176,16 @@ class NumberAndSizePagingStrategy implements PagingStrategyInterface
             $links[DocumentInterface::KEYWORD_LAST] = $this->createLink($totalPages, null, $treatAsHref);
         }
 
-        $data     = $paginator->items();
-        $pageSize = $paginator->perPage();
-        $meta     = $totalPages <= 1 ? null : [
+        $meta = $totalPages <= 1 ? null : [
             QueryParametersParserInterface::PARAM_PAGE => [
-                self::PARAM_PAGING_SIZE   => $pageSize,
-                self::PARAM_PAGING_NUMBER => $currentPage,
-                self::PARAM_PAGING_TOTAL  => $totalPages,
+                self::PARAM_PAGING_SIZE        => $paginator->perPage(),
+                self::PARAM_PAGING_NUMBER      => $currentPage,
+                self::PARAM_PAGING_TOTAL_PAGES => $totalPages,
+                self::PARAM_PAGING_TOTAL_ITEMS => $paginator->total(),
             ]
         ];
 
+        $data      = $paginator->items();
         $pagedData = $this->factory->createPagedData($data, $links, $meta);
 
         return $pagedData;
