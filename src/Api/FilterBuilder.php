@@ -19,6 +19,9 @@
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Neomerx\JsonApi\Contracts\Encoder\Parameters\EncodingParametersInterface;
+use Neomerx\JsonApi\Exceptions\ErrorCollection;
+use Neomerx\JsonApi\Exceptions\JsonApiException;
+use Neomerx\Limoncello\I18n\Translate as T;
 
 /**
  * @package Neomerx\Limoncello
@@ -36,6 +39,11 @@ class FilterBuilder
     private $operationHandlers = [];
 
     /**
+     * @var ErrorCollection
+     */
+    private $errors;
+
+    /**
      * @param string $defaultOperation
      * @param array  $operationHandlers
      */
@@ -45,6 +53,8 @@ class FilterBuilder
         foreach ($operationHandlers as $operation => $handler) {
             $this->registerOperation($operation, $handler);
         }
+
+        $this->errors = new ErrorCollection();
     }
 
     /**
@@ -67,6 +77,10 @@ class FilterBuilder
                     }
                 }
             }
+        }
+
+        if ($this->errors->count() > 0) {
+            throw new JsonApiException($this->errors);
         }
     }
 
@@ -101,6 +115,8 @@ class FilterBuilder
         if (array_key_exists($operation, $this->operationHandlers) === true) {
             $opHandler = $this->operationHandlers[$operation];
             $opHandler($builder, $fieldName, $parameters);
+        } else {
+            $this->errors->addQueryParameterError($operation, T::trans(T::KEY_ERR_PARAMETERS_NOT_SUPPORTED));
         }
     }
 }
