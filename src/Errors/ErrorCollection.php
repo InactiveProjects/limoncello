@@ -25,17 +25,18 @@ use Neomerx\JsonApi\Exceptions\ErrorCollection as BaseErrorCollection;
 class ErrorCollection extends BaseErrorCollection
 {
     /**
-     * @param MessageBag $messages
-     * @param array|null $attributeMap
+     * @param MessageBag      $messages
+     * @param array|null      $attributeMap
+     * @param string|int|null $status
      *
      * @return $this
      */
-    public function addAttributeErrorsFromMessageBag(MessageBag $messages, array $attributeMap = null)
+    public function addAttributeErrorsFromMessageBag(MessageBag $messages, array $attributeMap = null, $status = null)
     {
         foreach ($messages->getMessages() as $attribute => $attrMessages) {
             $name = $attributeMap === null ? $attribute : $attributeMap[$attribute];
             foreach ($attrMessages as $message) {
-                $this->addDataAttributeError($name, $message);
+                $this->addDataAttributeError($name, $message, null, $status);
             }
         }
 
@@ -43,17 +44,21 @@ class ErrorCollection extends BaseErrorCollection
     }
 
     /**
-     * @param MessageBag $messages
-     * @param array|null $relationshipMap
+     * @param MessageBag      $messages
+     * @param array|null      $relationshipMap
+     * @param string|int|null $status
      *
      * @return $this
      */
-    public function addRelationshipErrorsFromMessageBag(MessageBag $messages, array $relationshipMap = null)
-    {
+    public function addRelationshipErrorsFromMessageBag(
+        MessageBag $messages,
+        array $relationshipMap = null,
+        $status = null
+    ) {
         foreach ($messages->getMessages() as $relationship => $relMessages) {
             $name = $relationshipMap === null ? $relationship : $relationshipMap[$relationship];
             foreach ($relMessages as $message) {
-                $this->addRelationshipError($name, $message);
+                $this->addRelationshipError($name, $message, null, $status);
             }
         }
 

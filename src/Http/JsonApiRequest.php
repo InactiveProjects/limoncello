@@ -35,6 +35,7 @@ use Neomerx\Limoncello\JsonApi\Decoder\DocumentObject;
 use Neomerx\Limoncello\JsonApi\Decoder\RelationshipsObject;
 use Neomerx\Limoncello\JsonApi\Decoder\ResourceObject;
 use Neomerx\Limoncello\JsonApi\DocumentDecoder;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @package Neomerx\Limoncello
@@ -173,7 +174,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
         $this->validateOnActions($errors);
 
         if ($errors->count() > 0) {
-            throw new JsonApiException($errors);
+            throw new JsonApiException($errors, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -335,7 +336,7 @@ abstract class JsonApiRequest extends Request implements ValidatesWhenResolved
     {
         $messages = $this->createValidator($data, $rules)->messages();
         if ($messages->count() > 0) {
-            $errors->addAttributeErrorsFromMessageBag($messages);
+            $errors->addAttributeErrorsFromMessageBag($messages, null, Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
