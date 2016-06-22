@@ -37,6 +37,7 @@ use Neomerx\Limoncello\I18n\Translate as T;
 use Neomerx\Limoncello\JsonApi\Decoder\RelationshipsObject;
 use Neomerx\Limoncello\JsonApi\Decoder\ResourceIdentifierObject;
 use Neomerx\Limoncello\JsonApi\Schema;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * @package Neomerx\Limoncello
@@ -168,7 +169,7 @@ class Crud implements CrudInterface
 
         $newInstance = $this->createInstance($request, $errors);
         if ($errors->count() > 0) {
-            throw new JsonApiException($errors);
+            throw new JsonApiException($errors, SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $this->getAuthorizations()->canCreateNewInstance($errors, $newInstance);
@@ -184,7 +185,7 @@ class Crud implements CrudInterface
 
         $this->validateModelOnCreate($newInstance, $schema, $errors);
         if ($errors->count() > 0) {
-            throw new JsonApiException($errors);
+            throw new JsonApiException($errors, SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $belongsToMany = $request->getBelongsToMany();
@@ -226,7 +227,8 @@ class Crud implements CrudInterface
         $schema = $container->getSchemaByType($this->getModelClass());
 
         if ($schema::TYPE !== $request->getType()) {
-            $errors->addDataTypeError(T::trans(T::KEY_ERR_INVALID_ELEMENT));
+            $status = SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY;
+            $errors->addDataTypeError(T::trans(T::KEY_ERR_INVALID_ELEMENT), null, $status);
         }
 
         $this->validateInputOnUpdate($request, $schema, $errors);
@@ -237,7 +239,7 @@ class Crud implements CrudInterface
         $this->validateModelOnUpdate($model, $schema, $errors);
 
         if ($errors->count() > 0) {
-            throw new JsonApiException($errors);
+            throw new JsonApiException($errors, SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $belongsToMany = $request->getBelongsToMany();
@@ -271,7 +273,8 @@ class Crud implements CrudInterface
 
         // we do not support input 'id' on creation
         if (null !== $request->getId()) {
-            $errors->addDataIdError(T::trans(T::KEY_ERR_INVALID_ELEMENT));
+            $status = SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY;
+            $errors->addDataIdError(T::trans(T::KEY_ERR_INVALID_ELEMENT), null, $status);
         } else {
             $instance = $this->model->newInstance();
         }
