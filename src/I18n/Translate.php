@@ -74,6 +74,9 @@ class Translate
     const KEY_ERR_UNAUTHORIZED = 'err_unauthorized';
 
     /** Message id */
+    const KEY_ERR_FORBIDDEN = 'err_forbidden';
+
+    /** Message id */
     const KEY_ERR_RESOURCE_IDENTITY = 'err_resource_identity';
 
     /**

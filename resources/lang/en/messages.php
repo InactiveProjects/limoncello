@@ -26,6 +26,7 @@ return [
     T::KEY_ERR_PARAMETERS_NOT_SUPPORTED          => 'Parameters are not supported.',
 
     T::KEY_ERR_UNAUTHORIZED                      => 'Unauthorized.',
+    T::KEY_ERR_FORBIDDEN                         => 'Forbidden.',
     T::KEY_ERR_RESOURCE_IDENTITY                 => 'Resource identity \':0\'.',
 
 ];
