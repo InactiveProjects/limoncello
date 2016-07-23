@@ -66,15 +66,37 @@ class FilterBuilder
     public function build(Builder $builder, EncodingParametersInterface $parameters)
     {
         $filterParams = $parameters->getFilteringParameters();
-        if (empty($filterParams) === false && is_array($filterParams)) {
-            foreach ($filterParams as $fieldName => $value) {
-                if (is_string($value) === true) {
-                    $this->applyOperationToBuilder($builder, $fieldName, $this->getDefaultOperation(), [$value]);
-                } elseif (is_array($value) === true) {
-                    foreach ($value as $operation => $params) {
-                        $normalizedParams = is_array($params) === true ? $params : [$params];
-                        $this->applyOperationToBuilder($builder, $fieldName, $operation, $normalizedParams);
-                    }
+        if (empty($filterParams) === true || is_array($filterParams) === false) {
+            return;
+        }
+
+        $joinWithAnd = true;
+
+        // check of top level element is `AND` or `OR`
+        reset($filterParams);
+        $firstKey = strtolower(key($filterParams));
+        if ($firstKey === 'or' || $firstKey === 'and') {
+            if (count($filterParams) > 1) {
+                next($filterParams);
+                $field = key($filterParams);
+                $this->errors->addQueryParameterError($field, 'Invalid element');
+                return;
+            } else {
+                $filterParams = $filterParams[$firstKey];
+                if ($firstKey === 'or') {
+                    $joinWithAnd = false;
+                }
+            }
+        }
+
+        foreach ($filterParams as $fieldName => $value) {
+            if (is_string($value) === true) {
+                $operation = $this->getDefaultOperation();
+                $this->applyOperationToBuilder($builder, $fieldName, $operation, [$value], $joinWithAnd);
+            } elseif (is_array($value) === true) {
+                foreach ($value as $operation => $params) {
+                    $normalizedParams = is_array($params) === true ? $params : [$params];
+                    $this->applyOperationToBuilder($builder, $fieldName, $operation, $normalizedParams, $joinWithAnd);
                 }
             }
         }
@@ -106,15 +128,21 @@ class FilterBuilder
      * @param string  $fieldName
      * @param string  $operation
      * @param array   $parameters
+     * @param bool    $joinWithAnd
      *
      * @return void
      */
-    protected function applyOperationToBuilder(Builder $builder, $fieldName, $operation, array $parameters)
-    {
+    protected function applyOperationToBuilder(
+        Builder $builder,
+        $fieldName,
+        $operation,
+        array $parameters,
+        $joinWithAnd
+    ) {
         $operation = strtolower($operation);
         if (array_key_exists($operation, $this->operationHandlers) === true) {
             $opHandler = $this->operationHandlers[$operation];
-            $opHandler($builder, $fieldName, $parameters);
+            $opHandler($builder, $fieldName, $parameters, $joinWithAnd);
         } else {
             $this->errors->addQueryParameterError($operation, T::trans(T::KEY_ERR_PARAMETERS_NOT_SUPPORTED));
         }
